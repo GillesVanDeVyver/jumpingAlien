@@ -1,0 +1,584 @@
+package jumpingalien.model;
+
+import java.util.Arrays;
+
+import Exceptions.AlreadyJumpingException;
+import Exceptions.IllegalPositionException;
+import Exceptions.NotJumpingException;
+import be.kuleuven.cs.som.annotate.*;
+import jumpingalien.util.Sprite;	
+
+/**
+ * A class of game objects involving an x pixel, y pixel,
+ * orientation, hit points, world and sprites.
+ * 
+ * @invar Each game object has a valid position.
+ * 		  | isValidPosition(position)
+ * @invar Each  game object has a position inside the game boundaries.
+ * 	  	  | isWithinBoundaries(position)
+ * @invar Each game object has a valid orientation.
+ * 		  | isValidOrientation(orientation)
+ * @invar Each game object has valid hit points.
+ * 		  | isValidHitpoints(hitpoints)
+ * @invar Each game object has a proper world.
+ * 		  | hasProperWorld()
+ * @invar Each game object has valid sprites.
+ * 		  | isValidSprites(sprites)
+ * @invar Each game object has a valid terminate counter.
+ * 		  | isValidTerminateCounter(terminateCounter)
+ * 
+ * @version 3.2
+ * 
+ * @author Jolan Hofmans & Gilles Van De Vyver
+ */
+public abstract class GameObject extends Object{
+
+	/**
+	 * Initialise this GameObject with given x pixel, y pixel,
+	 * orientation, hit points, world and sprites.
+	 * 
+	 * @Pre The given orientation must be a valid orientation
+	 * 	  | isValidOrientation(orientation)
+	 * 
+	 * @param pixelX
+	 * 		  The new x pixel for this game object.
+	 * @param pixelY
+	 * 		  The new y pixel for this game object.
+	 * @param orientation
+	 * 		  The new orientation for this game object.
+	 * @param hitpoints
+	 * 		  The new hitpoints for this game object.
+	 * @param world
+	 * 		  The new world for this game object.
+	 * @param sprites
+	 * 	  	  The new sprites for this game object.
+	 * 
+	 * @throws IllegalArgumentException
+	 * 		   The given sprites are not valid sprites for this game object or
+	 * 		 | !isValidSprites(sprites)	||
+	 * 		   the given world is not a valid world for this game object or
+	 *       | !isValidWorld(world) ||
+	 *  	   the given position is not a valid position for this game object or
+	 *  	   is out of the boundaries of the world of this game object.
+	 *       | !Position.isValidPosition(position) || !isWithinBoundaries(position)
+	 * @throws IllegalPositionException 
+	 * 
+	 * @effect setPosition((new Pixel(new Integer[] {pixelX,pixelY},this.getWorldTileSize())).convertToPosition())
+	 * @effect setOrientation(orientation)
+	 * @effect setHitpoints(hitpoints)
+	 * @effect setSprites(sprites)
+	 * @effect setWorld(world)
+	 * @effect setTerminateCounter(0.0)
+	 */
+	@Raw
+	public GameObject
+	(int pixelX, int pixelY, int orientation, int hitpoints,World world, Sprite...sprites)
+	throws IllegalArgumentException, IllegalPositionException{
+		
+		assert (isValidOrientation(orientation));
+		this.setOrientation(orientation);
+		
+		Integer[] pixelToSet = new Integer[] {pixelX,pixelY};
+		Pixel pixel = new Pixel(pixelToSet,this.getWorldTileSize());
+		Position position = pixel.convertToPosition();
+		if (!isValidSprites(sprites) || !isValidWorld(world) ||
+				!Position.isValidPosition(position) || !isWithinBoundaries(position))
+			throw new IllegalArgumentException();
+		this.setSprites(sprites);
+		this.setWorld(world);
+		this.setPosition(position);
+		
+		setHitpoints(hitpoints);
+		setTerminateCounter(0.0);
+	}
+
+
+//_______________________________position_________________________________________
+	
+	/**
+	* Return a copy of the position of this game object.
+	* 
+	* @return  A copy of position of this game object.
+	* 		  | new Position(new Double[] {position.getXCoordinate(),
+	*		  |		position.getYCoordinate()},position.getTileSize());
+	*/
+	@Basic @Raw
+	public Position getPositionCopy() {
+		return Position.getCopyPosition(position);
+	}
+	
+	/**
+	* Return the x position of this game object.
+	* 
+	* @return  The x position of this game object.
+	* 		  | this.getPositionCopy().getXCoordinate()
+	*/
+	public double getXPosition() {
+		return this.getPositionCopy().getXCoordinate();
+	}
+	
+	/**
+	* Return the y position of this game object.
+	* 
+	* @return  The y position of this game object.
+	* 		  | this.getPositionCopy().getYCoordinate()
+	*/
+	public double getYPosition() {
+		return this.getPositionCopy().getYCoordinate();
+	}
+	
+	/**
+ 	 * Return the pixel of this this game object.
+	 * 
+	 * @return The pixel position of this game object derived from its copied position.
+	 * 		   | this.getPositionCopy().convertToPixel();
+	 */
+	@Raw
+	public Pixel getPixel() {
+		return this.getPositionCopy().convertToPixel();
+	}
+	
+	/**
+	 * Set the position of this game object to a copy of the given position.
+	 * 
+	 * @param 	position
+	 * 		  	The new position for this game object.
+	 * @throws IllegalPositionException 
+	 * 			| !Position.isValidPosition(position)
+	 * @post    The position of this game object is equal to a copy of the given position. 
+	 * 		    |new.position == Position.getCopyPosition(position);
+	 */
+	@Basic @Raw
+	protected void setPosition(Position position) throws IllegalPositionException {
+		if (!Position.isValidPosition(position))
+			throw new IllegalPositionException(position, this);
+		this.position = Position.getCopyPosition(position);
+	}
+	
+	/**
+	 * Variable registering the position of this game object.
+	 */
+	private Position position = new Position(new Double[] {0.0,0.0},10);
+	
+//_______________________________Velocity_________________________________________
+	
+	/**
+	 * return the velocity of this game object.
+	 */
+	@Basic @Raw @Immutable
+	public abstract double[] getVelocity();
+	
+	/**
+	* Return the x velcity of this game object.
+	* 
+	* @return  The x velcity of this game object.
+	* 		  | this.getVelocity()[0]
+	*/
+	public double getXVelocity() {
+		return this.getVelocity()[0];
+	}
+	
+	/**
+	* Return the y velcity of this game object.
+	* 
+	* @return  The y velcity of this game object.
+	* 		  | this.getVelocity()[0]
+	*/
+     public double getYVelocity() {
+		return this.getVelocity()[1];
+	}		
+//_______________________________Hitpoints_________________________________________
+
+	/**
+ 	 * return the number of hit points of this game object.
+ 	 * 
+ 	 * @return The hit points of this game object
+ 	 *		   | this.hitpoints
+ 	 */
+	@Basic @Raw
+ 	public int getHitpoints() {
+		return this.hitpoints;
+	}
+	
+	/**
+	 *  Check whether the given speed hit points is a valid 
+	 *  hit points for any game object.
+	 *  
+	 * @param	hitpoints
+	 * 			The hit points to check.
+	 * @return	False if the given hit points
+	 * 			is NaN or is negative.
+	 * 		  | if (Double.isNaN(hitpoints) ||  hitpoints < 0)
+	 *	      | 	then return false
+	 *			True otherwise.
+	 *		  | else
+	 *		  |		then return true
+	 */
+	private boolean isValidHitpoints(int hitpoints) {
+		if (Double.isNaN(hitpoints) ||  hitpoints < 0)
+			return false;
+		return true;
+		}
+ 	
+ 	/**
+	 * Check whether the game object is alive.
+	 * 
+ 	 * @return True if and only if the hit points of this game object are greater than 0.0.
+ 	 * 		   | this.getHitpoints() > 0.0
+ 	 */
+ 	public boolean isAlive() {
+ 		return (this.getHitpoints() > 0.0);
+ 	}
+ 	
+ 	/**
+	 * Set the hit points of this game object to the given hit points.
+	 * @param hitpoints
+	 * 		  The hit points to set 
+	 * @post  If the given hit points are  valid hit points, 
+	 * 		  the new hit points of this game object is equal to the given hit points.
+	 * 		| if (isValidHitpoints(hitpoints))
+ 	 *		| 	then new.getHitpoints()  == hitpoints
+ 	 *		  Otherwise the hit points of this game object are equal to 0.0
+ 	 *		| else
+ 	 *		|	then new.getHitpoints()  == 0
+ 	 *
+ 	 */
+ 	protected void setHitpoints(int hitpoints) {
+ 		if (!isValidHitpoints(hitpoints))
+ 			this.hitpoints  = 0;
+ 		else
+ 			this.hitpoints  = hitpoints;
+	}
+     
+ 	/**
+	 * Variable registering the hit points of this game object.
+ 	 */
+    private int hitpoints = 0;
+    
+    
+ //_______________________________terminateCounter_________________________________________
+
+	/**
+ 	 * return the number of terminate counter of this game object.
+ 	 * 
+ 	 * @return The terminate counter of this game object
+ 	 *		   | this.terminateCounter
+ 	 */
+	@Basic @Raw
+    public double getTerminateCounter() {
+    	return this.terminateCounter;
+    }
+	
+	/**
+	 *  Check whether the given speed terminate counter is a valid 
+	 *  terminate counter for any game object.
+	 *  
+	 * @param	terminateCounter
+	 * 			The terminate counter to check.
+	 * @return	False if the given terminate counter
+	 * 			is NaN or not between 0.0 and 0.6.
+	 * 		  | if (Double.isNaN(terminateCounter) ||  terminateCounter < 0 ||  terminateCounter > 0.6)
+	 *	      | 	then return false
+	 *			True otherwise.
+	 *		  | else
+	 *		  |		then return true
+	 */
+	private boolean isValidTerminateCounter(double terminateCounter) {
+		if (Double.isNaN(terminateCounter)
+				||  terminateCounter > 0.6
+				|| terminateCounter < 0.0)
+				return false;
+			return true;
+	}
+    
+ 	/**
+	 * Set the terminate counter of this game object to the given terminate counter.
+	 * @param terminateCounter
+	 * 		  The terminate counter to set 
+	 * @post  If the given terminate counter is a valid terminate counter, 
+	 * 		  the new terminate counter of this game object is equal to the given terminate counter.
+	 * 		| if (isValidHitpoints(terminateCounter))
+ 	 *		| 	then new.getTerminateCounter()  == terminateCounter
+ 	 *		  Otherwise the terminate counter of this game object are equal to 0.0
+ 	 *		| else
+ 	 *		|	then new.getTerminateCounter()  == 0
+ 	 *
+ 	 */
+	@Basic @Raw
+    private void setTerminateCounter(double terminateCounter) {
+ 		if (!isValidTerminateCounter(terminateCounter))
+ 			this.terminateCounter = 0.0;
+    	this.terminateCounter = terminateCounter;
+    }
+    
+    /**
+	 * Variable registering the terminate counter of this game object.
+	 */
+    private double terminateCounter = 0.0;
+
+
+//_______________________________orientation_________________________________________
+
+    /**
+	* Return the orientation of this game object.
+	* 
+	* @return The orientation of this game object.
+	* 		  | this.orientation
+	*/
+	@Basic @Raw @Immutable
+  	public int getOrientation(){
+  		return this.orientation*-1;
+  	}
+  	
+  	/**
+	* Check whether the given orientation is a valid 
+	* orientation for any game object.
+	* 
+	* @return   True if and only if the given orientation
+	* 			is either -1, 0 or 1
+	* 			| (orientation == -1)
+  	*			| || (orientation == 0)
+  	*			| || (orientation == 1)
+	*/	
+  	@Basic @Raw
+  	public boolean isValidOrientation(int orientation) {
+  		return ((orientation == -1)
+  				|| (orientation == 0)
+  				|| (orientation == 1));
+  	}
+  	
+  	/**
+	 * Set the orientation of this game object to the given orientation.
+	 * 
+	 * @param orientation
+	 * 
+	 * @Pre The given orientation must be a valid orientation
+	 * 	  | isValidOrientation(orientation)
+	 * 
+	 * @post The orientation of this game object is equal to the given orientation
+	 * 		 | new.getOrientation == orientation
+	 */
+	@Basic @Raw
+  	public void setOrientation(int orientation) {
+		assert (isValidOrientation(orientation));
+  		this.orientation = orientation;
+  	}
+	
+  	/**
+  	 * Variable registering the orientation of this game object.
+  	 */
+  	private int orientation = 0;
+  	
+	
+ //_______________________________terminated_________________________________________
+  	
+	/**
+	 * Check whether this game object is terminated.
+	 * 
+	 * @return  True if and only if the terminated state is true.
+	 * 			| this.terminated
+	 */
+	@Basic @Raw
+	public boolean isTerminated() {
+		return this.terminated;
+	}
+	
+	/**
+	 * Terminate this game object.
+	 * 
+	 * @post Set the terminated state of this gameObject to true.
+	 * 		 | new.isTerminated() == true
+	 * @post The world of this game object is null
+	 * 		 | new.getWorld() == null
+	 * 
+	 * @effect If the given world is not null, this game object is removed from the world
+	 * 		   | if (this.getWorld() != null) {
+	 *		   | 	this.getWorld().removeAsGameObject(this)
+	 */
+	@Basic @Raw
+	public void terminate() {
+		World world = this.getWorld();
+		if (world != null) {
+			world.removeAsGameObject(this);
+		}
+		this.terminated = true;
+	}
+	
+	/**
+  	 * Variable registering the terminated state of this game object.
+	 */
+	protected boolean terminated = false;
+	
+	
+//_______________________________world_________________________________________
+
+	/**
+	* Return the world of this game object.
+	* 
+	* @return The world of this game object.
+	* 		  | this.world
+	*/
+	@Basic @Raw 
+	public World getWorld() {
+		return this.world;
+	}
+	
+	/**
+	* Check whether the given world is a valid world for any game object.
+	* 
+	* @return True if and only if the given world is not null and
+	* 		  contains this game object and is not terminated.
+	* 		  |(world != null) && (world.containGameObject(this))) && (!world.isTerminated())
+	*/	
+	@Basic @Raw
+	public boolean isValidWorld(World world) {
+		return  (world == null ||( world.containGameObject(this) && !world.isTerminated()));
+	}
+	
+	/**
+	 * Check whether the world off this game object is a proper world for this game object.
+	 * 
+	 * @return  True if and only if the given world is a valid world.
+	 * 			| isValidWorld(this.getWorld())
+	 */
+	@Basic @Raw
+	public boolean hasProperWorld() {
+		return isValidWorld(this.getWorld());
+	}
+	
+	/**
+	 * Set the world of this game object to the given world.
+	 * 
+	 * @param world
+	 * 
+	 * @post The world of this game object is equal to the given world.
+	 * 		 | new.getWorld() == world
+	 */
+	@Basic @Raw
+	public void setWorld(World world) {
+		this.world = world;
+	}
+	
+	/**
+  	 * Variable registering the world of this game object.
+	 */
+	protected World world;
+	
+	
+// _______________________________Sprites______________________________________________
+
+
+	 public int getNbsprites() throws NullPointerException{
+		return this.getSpritesCopy().length;
+	 }
+	 
+	 public Sprite[] getSpritesCopy() {
+		 Sprite[] copySprites = Arrays.copyOf(sprites.clone(),sprites.length);
+		 return copySprites;
+	 }
+	 
+	 public Sprite getSpriteAt(int index) {
+		 return this.getSpritesCopy()[index];
+	 }
+	 
+	 abstract boolean isValidNbSprites(int nbSprites);
+	 
+	 
+	 public boolean isValidSprites(Sprite[] sprites) {
+		 if ((sprites == null) || (!isValidNbSprites(sprites.length)))
+			 return false;
+		 for (int index = 0 ; index < sprites.length; index++) {
+			 if (sprites[index] == null)
+				 return false;
+			}
+		 return true;
+	 }
+	 
+	 private void setSprites(Sprite[] sprites) {
+		 Sprite[] copySprites = Arrays.copyOf(sprites,sprites.length);
+		 this.sprites=copySprites; 
+	 }	 
+	 
+	public abstract Sprite getCurrentSprite();
+	 
+	private Sprite[] sprites;
+
+//_______________________________Advance_Time______________________________________________
+
+	public void advanceTime(double dt) throws IllegalPositionException, NotJumpingException, AlreadyJumpingException {
+		if (Double.isNaN(dt) || dt < 0.0 || (dt > 0.2))
+			throw new IllegalArgumentException();
+		world = this.getWorld();
+		if (this.isAlive())
+			this.updateParameters(dt);
+
+		if (!this.isAlive() && !this.isTerminated()) {
+			double counter = this.getTerminateCounter() + dt;
+			this.setTerminateCounter(counter );
+			if (counter > 0.6)
+				this.terminate();
+		}
+	}
+	
+	private boolean isWithinBoundaries(Position doublePosition) {
+		World world = this.getWorld();
+		double[] maxPos = {Double.MAX_VALUE, Double.MAX_VALUE};
+		if (world != null) {
+			maxPos[0] = world.getSizeInPixels()[0]*0.01; 
+			maxPos[1] =world.getSizeInPixels()[1] * 0.01;
+		}
+		double positionX = doublePosition.getXCoordinate();
+		double positionY = doublePosition.getYCoordinate();
+			return ((positionX >= 0.0) && (positionX < maxPos[0])
+							&& (positionY >= 0.0) && (positionY < maxPos[1]));
+	}	
+	
+	public int getXp() {
+		return this.getCurrentSprite().getWidth();
+	}
+	
+	public int getYp() {
+		return this.getCurrentSprite().getHeight();
+	}
+	
+	public Pixel getTopRightInner() {
+		Pixel currentPixel = this.getPixel();
+		int xPixel = currentPixel.getXCoordinate() + this.getXp() -1;
+		int yPixel = currentPixel.getYCoordinate() + this.getYp() -1;
+		Integer[] pixelToGet = new Integer[] {xPixel,yPixel};
+		Pixel pixel = new Pixel(pixelToGet,this.getWorldTileSize());
+		return pixel;
+	}
+	
+	public boolean collidesWith(GameObject other){		
+		return  (!((this.getTopRightInner().getXCoordinate() < other.getPixel().getXCoordinate()
+				|| other.getTopRightInner().getXCoordinate() < this.getPixel().getXCoordinate()
+				|| this.getTopRightInner().getYCoordinate() < other.getPixel().getYCoordinate()
+				|| other.getTopRightInner().getYCoordinate() < this.getPixel().getYCoordinate())));
+	}
+	
+	public void changePosition(Position position)
+			throws IllegalPositionException{
+		Position oldPosition = this.getPositionCopy();
+		this.setPosition(position);
+		if (this instanceof ImpassableGameObject) { 
+			((ImpassableGameObject) this).doImpassableCollisions(oldPosition);
+		}
+		if (!this.isTerminated() && !this.isWithinBoundaries(position))
+			this.terminate();
+	}
+	
+	public int getWorldTileSize() {
+		World world = this.getWorld();
+		if (world == null)
+			return 0;
+		else {
+			return world.getTileSize();
+		}	
+	}
+	
+	public abstract double[] getAcceleration();
+	
+	abstract void updateParameters(double dt) throws IllegalPositionException, NotJumpingException, AlreadyJumpingException;
+	
+}

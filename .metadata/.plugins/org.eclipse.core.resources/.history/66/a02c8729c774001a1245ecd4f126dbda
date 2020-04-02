@@ -1,0 +1,558 @@
+package jumpingalien.facade;
+
+import java.util.Collection;
+import java.lang.Object;
+import java.util.Set;
+
+import Exceptions.*;
+//import jumpingalien.internal.Resources;
+import jumpingalien.internal.gui.sprites.JumpingAlienSprites;
+import jumpingalien.model.GameObject;
+import jumpingalien.model.Mazub;
+import jumpingalien.model.Pixel;
+import jumpingalien.model.Plant;
+import jumpingalien.model.Position;
+import jumpingalien.model.School;
+import jumpingalien.model.Shark;
+import jumpingalien.model.Skullcab;
+import jumpingalien.model.Slime;
+import jumpingalien.model.Sneezewort;
+import jumpingalien.model.World;
+import jumpingalien.util.ModelException;
+import jumpingalien.util.ShouldNotImplementException;
+import jumpingalien.util.Sprite;
+
+/**
+ * 
+ * @author Jolan Hofmans & Gilles Van De Vyver
+ *
+ */
+
+public class Facade implements IFacade {
+
+	@Override
+	public boolean isTeamSolution() {
+		return true;
+	}
+
+	@Override
+	public Mazub createMazub(int pixelLeftX, int pixelBottomY, Sprite... sprites) throws ModelException {
+		try {
+			return new Mazub(pixelLeftX, pixelBottomY,sprites);}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		catch (IllegalPositionException exc){
+			throw new ModelException("IllegalPositionException");
+		}
+		
+	}
+
+	@Override
+	public double[] getActualPosition(Mazub alien) throws ModelException {
+		Position position = alien.getPositionCopy();
+		double[] returnPosition = {position.getXCoordinate(), position.getYCoordinate()};
+		return returnPosition;
+	}
+
+	@Override
+	public void changeActualPosition(Mazub alien, double[] newPosition) throws ModelException {
+		changeActualPosition((GameObject) alien,newPosition);
+		//		try{
+//			Double[]  positionToSet = new Double[] {newPosition[0], newPosition[1]};
+//			Position position = new Position(positionToSet,alien.getWorldTileSize());
+//			alien.changePosition(position);
+//		}
+//		catch (IllegalPositionException exc){
+//			throw new ModelException("IllegalPositionException");
+//		}
+//		catch (NullPointerException exc){
+//			throw new ModelException("NullPointerException");
+//		}
+
+	}
+
+	@Override
+	public int[] getPixelPosition(Mazub alien) throws ModelException {
+		Pixel pixel = alien.getPixel();
+		int[] returnPixel = {pixel.getXCoordinate(),pixel.getYCoordinate()};
+		return returnPixel;
+	}
+
+	@Override
+	public int getOrientation(Mazub alien) throws ModelException {
+		return alien.getOrientation();
+	}
+
+	@Override
+	public double[] getVelocity(Mazub alien) throws ModelException {
+		return alien.getVelocity();
+	}
+
+	@Override
+	public double[] getAcceleration(Mazub alien) throws ModelException {
+		return alien.getAcceleration();
+	}
+	
+	@Override
+	public Sprite[] getSprites(Mazub alien) throws ModelException, ShouldNotImplementException {
+		if (!isTeamSolution()) {
+			throw new ShouldNotImplementException("Not to be implemented by individual students");
+		}
+//		throw new NoSuchMethodError("Teams of 2 students should implement this method.");
+		return alien.getSpritesCopy();
+	}
+
+
+	@Override
+	public Sprite getCurrentSprite(Mazub alien) throws ModelException {
+		if (!isTeamSolution()) {
+			return JumpingAlienSprites.DEFAULT_MAZUB_SPRITE;
+		}
+//		throw new NoSuchMethodError("Teams of 2 students should implement this method.");
+		return alien.getCurrentSprite();			
+	}
+	
+	
+	@Override
+	public boolean isMoving(Mazub alien) throws ModelException {
+		return (alien.getVelocity()[0] != 0.0);
+	}
+
+	@Override
+	public void startMoveLeft(Mazub alien) throws ModelException {
+		try{
+			alien.startMove(-1);
+		}
+		catch (AlreadyMovingException exc){
+			throw new ModelException("AlreadyMovingException");
+		}
+		catch (IllegalArgumentException exc){
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void startMoveRight(Mazub alien) throws ModelException {
+		try{
+			alien.startMove(1);
+		}
+		catch (AlreadyMovingException exc){
+		//	throw new ModelException("AlreadyMovingException");
+		}
+		catch (IllegalArgumentException exc){
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+	@Override
+	public void endMove(Mazub alien) throws ModelException {
+		try{
+			alien.endMove();
+		}
+		catch (NotMovingException exc){
+			throw new ModelException("NotMovingException");
+		}
+	}
+
+	@Override
+	public boolean isJumping(Mazub alien) throws ModelException {
+		return alien.isJumping();
+	}
+
+	@Override
+	public void startJump(Mazub alien) throws ModelException {
+		try{
+			alien.beginJump();
+		}
+		catch (AlreadyJumpingException exc){
+			throw new ModelException("AlreadyJumpingException");
+		}
+		catch (IllegalArgumentException exc){
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void endJump(Mazub alien) throws ModelException {
+		try{
+			alien.endJump();
+		}
+		catch (NotJumpingException exc){
+			throw new ModelException("NotJumpingException");
+		}
+	}
+
+	@Override
+	public boolean isDucking(Mazub alien) throws ModelException {
+		return alien.isDucked();
+	}
+
+	@Override
+	public void startDuck(Mazub alien) throws ModelException {
+		alien.startDuck();
+	}
+
+	@Override
+	public void endDuck(Mazub alien) throws ModelException {
+		alien.endDuck();
+	}
+
+	@Override
+	public World createWorld(int tileSize, int nbTilesX, int nbTilesY, int[] targetTileCoordinate,
+			int visibleWindowWidth, int visibleWindowHeight, int... geologicalFeatures) throws ModelException {
+		try{
+			return new World(tileSize, nbTilesX, nbTilesY, targetTileCoordinate, visibleWindowWidth, visibleWindowHeight,geologicalFeatures);
+		}catch	(IllegalArgumentException exc){
+
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void terminateWorld(World world) throws ModelException {
+		world.terminate();
+	}
+
+	@Override
+	public int[] getSizeInPixels(World world) throws ModelException {
+		return world.getSizeInPixels();
+	}
+
+	@Override
+	public int getTileLength(World world) throws ModelException {
+		return world.getTileSize();
+	}
+
+	@Override
+	public int getGeologicalFeature(World world, int pixelX, int pixelY) throws ModelException {
+		return world.getGeologicalFeatureAt(pixelX, pixelY);
+	}
+
+	@Override
+	public void setGeologicalFeature(World world, int pixelX, int pixelY, int geologicalFeature) throws ModelException {
+		world.setGeologicalFeatureAt(pixelX, pixelY, geologicalFeature);	
+	}
+
+	@Override
+	public int[] getVisibleWindowDimension(World world) throws ModelException {
+		return world.getVisibleWindowDimension();
+	}
+	
+	public int[] getVisibleWindowPosition(World world) throws ModelException {
+		return (world.getVisibleWindowPosition());
+	}
+
+	@Override
+	public boolean hasAsGameObject(Object object, World world) throws ModelException {
+		return world.containGameObject((GameObject) object);
+	}
+
+	@Override
+	public Set<Object> getAllGameObjects(World world) throws ModelException {
+		return world.getAllGameObjects();
+	}
+
+	@Override
+	public Mazub getMazub(World world) throws ModelException {
+		return world.getMazub();
+	}
+
+	@Override
+	public void addGameObject(Object object, World world) throws ModelException {
+		try {
+			world.addAsGameObject( (GameObject) object);}
+		catch(IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void removeGameObject(Object object, World world) throws ModelException {
+		try {
+			world.removeAsGameObject((GameObject) object);
+		}
+		catch(IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public int[] getTargetTileCoordinate(World world) throws ModelException {
+		return world.getTargetTileCoordinatesArray();
+	}
+
+	@Override
+	public void setTargetTileCoordinate(World world, int[] tileCoordinate) throws ModelException {
+		try{
+			world.setTargetTileCoordinates(tileCoordinate);
+		} catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void startGame(World world) throws ModelException {
+		try{
+			world.startGame();
+		} catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public boolean isGameOver(World world) throws ModelException {
+		return world.isGameOver();
+	}
+
+	@Override
+	public boolean didPlayerWin(World world) throws ModelException {
+		return world.didPlayerWin();
+	}
+
+	@Override
+	public void advanceWorldTime(World world, double dt) {
+		try {
+		world.advanceTime(dt);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void terminateGameObject(Object gameObject) throws ModelException {
+		((GameObject) gameObject).terminate();
+	}
+
+	@Override
+	public boolean isTerminatedGameObject(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).isTerminated();
+	}
+
+	@Override
+	public boolean isDeadGameObject(Object gameObject) throws ModelException {
+		return (!((GameObject) gameObject).isAlive());
+	}
+
+	@Override
+	public double[] getActualPosition(Object gameObject) throws ModelException {
+		Position position = ((GameObject) gameObject).getPositionCopy();
+		double[] returnPosition = {position.getXCoordinate(), position.getYCoordinate()};
+		return returnPosition;
+	}
+
+	@Override
+	public void changeActualPosition(Object gameObject, double[] newPosition) throws ModelException {
+		try {
+//			Double[] positionToSet = new Double[] newPosition;
+			if (!Position.canBeConvertedToPosition(newPosition))
+				throw new IllegalArgumentException();
+			Double[]  positionToSet = new Double[] {newPosition[0], newPosition[1]};
+			Position position = new Position(positionToSet,((GameObject) gameObject).getWorldTileSize());
+			((GameObject) gameObject).changePosition(position);
+		}
+		catch (IllegalPositionException exc) {
+			throw new ModelException("IllegalPositionException");
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		
+	}
+
+	@Override
+	public int[] getPixelPosition(Object gameObject) throws ModelException {
+		Pixel pixel = ((GameObject) gameObject).getPixel();
+		int[] returnPixel = {pixel.getXCoordinate(),pixel.getYCoordinate()};
+		return returnPixel;
+	}
+
+	
+	@Override
+	public int getOrientation(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).getOrientation();
+	}
+
+	@Override
+	public double[] getVelocity(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).getVelocity();
+	}
+
+	@Override
+	public World getWorld(Object object) throws ModelException {
+		if (object instanceof GameObject)
+			return ((GameObject) object).getWorld();
+		else
+			return ((School) object).getWorld();
+	}
+
+	@Override
+	public int getHitPoints(Object object) throws ModelException {
+		return (int) ((GameObject) object).getHitpoints();
+	}
+
+	@Override
+	public Sprite[] getSprites(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).getSpritesCopy();
+	}
+	
+	public Sprite getCurrentSprite(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).getCurrentSprite();
+	}
+
+	@Override
+	public void advanceTime(Object gameObject, double dt) throws ModelException {
+		try {
+			((GameObject) gameObject).advanceTime(dt);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public double[] getAcceleration(Object gameObject) throws ModelException {
+		return ((GameObject) gameObject).getAcceleration();
+	}
+
+	@Override
+	public Sneezewort createSneezewort(int pixelLeftX, int pixelBottomY, Sprite... sprites) throws ModelException {
+		try {
+			return new Sneezewort(pixelLeftX,pixelBottomY, sprites);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		catch (IllegalPositionException exc){
+			throw new ModelException("IllegalPositionException");
+		}
+	}
+
+	@Override
+	public Skullcab createSkullcab(int pixelLeftX, int pixelBottomY, Sprite... sprites) throws ModelException {
+		try {
+			return new Skullcab(pixelLeftX, pixelBottomY, sprites);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		catch (IllegalPositionException exc){
+			throw new ModelException("IllegalPositionException");
+		}
+	}
+
+	@Override
+	public Slime createSlime(long id, int pixelLeftX, int pixelBottomY, School school, Sprite... sprites)
+			throws ModelException {
+		try {
+			return new Slime(id, pixelLeftX, pixelBottomY, school, sprites);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		catch (IllegalPositionException exc){
+			throw new ModelException("IllegalPositionException");
+		}
+		catch (NullPointerException exc){
+			throw new ModelException("NullPointerException");
+		}
+	}
+
+	@Override
+	public long getIdentification(Slime slime) throws ModelException {
+		return slime.getSlimeID();
+	}
+
+	@Override
+	public School createSchool(World world) throws ModelException {
+		try {
+			return new School(world);
+		}catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public boolean hasAsSlime(School school, Slime slime) throws ModelException {
+		return school.contains(slime);
+	}
+
+	@Override
+	public Collection<? extends Slime> getAllSlimes(School school) {
+		return school.getCopyOfAllSlimes();
+	}
+
+	@Override
+	public void addAsSlime(School school, Slime slime) throws ModelException {
+		try{
+			school.add(slime);
+		}catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void removeAsSlime(School school, Slime slime) throws ModelException {
+		try{
+			school.remove(slime);
+		}catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public void switchSchool(School newSchool, Slime slime) throws ModelException {
+		try{
+			slime.switchSlime(newSchool);
+		}catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+	}
+
+	@Override
+	public School getSchool(Slime slime) throws ModelException {
+		return slime.getSchool();
+	}
+
+	@Override
+	public boolean isLateTeamSplit() {
+		return false;
+	}
+
+	@Override
+	public Set<School> getAllSchools(World world) throws ModelException {
+		return world.getSchoolSet();
+	}
+
+	@Override
+	public void cleanAllSlimeIds() {
+		School.cleanNullSchool();
+	}
+
+	@Override
+	public void terminateSchool(School school) throws ModelException {
+		school.terminate();
+	}
+
+	@Override
+	public boolean hasImplementedWorldWindow() {
+		return true;
+	}
+	
+	@Override
+	public Shark createShark(int pixelLeftX, int pixelBottomY, Sprite... sprites) throws ModelException {
+		try {
+			return new Shark(pixelLeftX, pixelBottomY, sprites);
+		}
+		catch (IllegalArgumentException exc) {
+			throw new ModelException("IllegalArgumentException");
+		}
+		catch (IllegalPositionException exc){
+			throw new ModelException("IllegalPositionException");
+		}
+		catch (NullPointerException exc){
+			throw new ModelException("NullPointerException");
+		}
+	}
+
+}

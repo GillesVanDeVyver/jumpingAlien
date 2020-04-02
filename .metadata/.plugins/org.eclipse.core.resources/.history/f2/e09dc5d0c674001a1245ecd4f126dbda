@@ -1,0 +1,544 @@
+package jumpingalien.model;
+
+import java.util.Set;
+import java.util.TreeSet;
+import Exceptions.IllegalPositionException;
+import be.kuleuven.cs.som.annotate.Basic;
+import be.kuleuven.cs.som.annotate.Raw;
+import jumpingalien.util.Sprite;
+
+/**
+ * A class of slimes involving a unique id, x pixel, y pixel,
+ * orientation, hit points, world, x velocity, school, x acceleration,
+ * geo counter and sprites.
+ * 
+ * @invar | isValidPosition(position)
+ * @invar | isWithinBoundaries(position)
+ * @invar | isValidOrientation(orientation)
+ * @invar | isValidHitpoints(hitpoints)
+ * @invar | hasProperWorld()
+ * @invar | isValidSprites(sprites)
+ * @invar | isValidTerminateCounter(terminateCounter)
+ * @invar | (isValidSlimeID(id)) 
+ * @invar | (isUniqueSlimeID(id))
+ * 
+ * @version 3.2
+ * 
+ * @author Jolan Hofmans & Gilles Van De Vyver
+ */
+public class Slime extends ImpassableGameObject implements HorizontalGameObject {
+	
+	/**
+	 * Initialise this slime with given id, x pixel, y pixel,
+	 * orientation, hit points, world, x velocity, school,
+	 * x acceleration, geo counter and sprites.
+	 * 
+	 * @Pre The given orientation must be a valid orientation
+	 * 	  | isValidOrientation(orientation)
+	 * 
+	 * @param id
+	 * 		  the new id for this slime
+	 * @param pixelX
+	 * 		  The new x pixel for this slime.
+	 * @param pixelY
+	 * 		  The new y pixel for this slime.
+	 * @param orientation
+	 * 		  The new orientation for this slime.
+	 * @param hitpoints
+	 * 		  The new hitpoints for this slime.
+	 * @param world
+	 * 		  The new world for this slime.
+	 * @param Xvelocity
+	 * 		  The new XVelocity for this slime.
+	 * @param school
+	 * 		  The new school for this slime
+	 * @param xAcceleration
+	 * 		  The new x acceleration for this slime
+	 * @param geoCounter
+	 * 		  The geolocial counter for this slime.
+	 * @param sprites
+	 * 	  	  The new sprites for this slime.
+	 * 
+	 * @throws IllegalArgumentException
+	 * 		 | !isValidSprites(sprites)	|| !isValidWorld(world) ||
+	 *       | !Position.isValidPosition(position) || !isWithinBoundaries(position)
+	 * @throws IllegalArgumentException
+	 * 		 | !isValidSlimeID(id)) || !isUniqueSlimeID(id)
+	 * @throws IllegalPositionException 
+	 * 
+	 * @effect | new ImpassableGameObject(pixelX, pixelY, orientation, hitpoints, world, geoCounter, sprites)
+	 * @effect | this.setSlimeID(id)
+	 * @effect | this.setXVelocity(XVelocity)
+	 * @effect | this.setXAcceleration(xAcceleration*orientation)
+	 * 
+	 * @post | if (school != null)
+	 * 		 |	then new.getSchool() == school
+	 * 		 | 		 new.getSchool().contains(this)
+	 * 		 |else
+	 * 		 |	then new.getSchool() == School.getNullSchool()
+	 */
+	public Slime(long id,int pixelX, int pixelY, int orientation, int hitpoints, World world, double XVelocity,
+			School school, double xAcceleration, double geoCounter, double collisionCounter, Sprite[] sprites)
+			throws IllegalArgumentException, IllegalPositionException {
+		super(pixelX, pixelY, orientation, hitpoints, world, geoCounter, collisionCounter, sprites);
+		if ((isValidSlimeID(id)) && isUniqueSlimeID(id))
+			this.setSlimeID(id);
+		else
+			throw new IllegalArgumentException();
+		this.setXVelocity(XVelocity);
+		if (school != null) {
+			school.add(this);
+			this.setSchool(school);
+		}
+		else
+			this.setNullSchool();
+		this.setXAcceleration(xAcceleration*orientation);
+	}
+	
+	/**
+	 * Initialise this slime with given id, given x pixel, given y pixel,
+	 * orientation 1, hit points SLIME_INIT_HP, world null, x velocity 0.0,
+	 * given school, x accelleration SLIMEACCELERATION, geo counter 0.0, and given sprites.
+	 * 
+	 * @Pre The given orientation must be a valid orientation
+	 * 	  | isValidOrientation(orientation)
+	 * 
+	 * @param id
+	 * 		  the new id for this slime
+	 * @param pixelX
+	 * 		  The new x pixel for this slime.
+	 * @param pixelY
+	 * 		  The new y pixel for this slime.
+	 * @param school
+	 * 		  The new school for this slime
+	 * @param sprites
+	 * 	  	  The new sprites for this slime.
+	 * 
+	 * @throws IllegalArgumentException
+	 * 		 | !isValidSprites(sprites)	|| !isValidWorld(world) ||
+	 *       | !Position.isValidPosition(position) || !isWithinBoundaries(position)
+	 * @throws IllegalArgumentException
+	 * 		 | !isValidSlimeID(id)) || !isUniqueSlimeID(id)
+	 * 
+	 * @effect new Slime(id, pixelX, pixelY, 1, 100, null, 0.0, school, SLIMEACCELERATION, 0.0, sprites)
+	 * 
+	 * @post | if (school != null)
+	 * 		 |	then new.getSchool() == school
+	 * 		 | 		 new.getSchool().contains(this)
+	 * 		 |else
+	 * 		 |	then new.getSchool() == School.getNullSchool()
+	 */
+	public Slime(long id, int pixelX, int pixelY, School school, Sprite...sprites) 
+			throws IllegalPositionException{
+		this(id, pixelX, pixelY, -1, SLIME_INIT_HP, null, 0.0, school, 
+				SLIMEACCELERATION, 0.0, 0.0, sprites);
+	}
+
+	 /**
+	 * Variable referencing the initial hitpoints of any skullcab.
+	 */
+	private static int SLIME_INIT_HP = 100;
+
+//_______________________________slimeID_________________________________________
+	
+	 /**
+	 * Returns the slime id of this slime
+	 * 
+	 * @return |this.slimeID
+	 */
+	@Raw @Basic
+	public Long getSlimeID() {
+		return this.slimeID;
+	}
+
+	 /**
+	 * check whether the given slime id is a valid slime id.
+	 * 
+	 * @param slimeID
+	 * 		  | the slimeId to check
+	 * 
+	 * @return | if (slimeID == null || slimeID < 0)
+	 * 		   | 	then return false
+	 * 		   | else
+	 * 		   |	then return true
+	 */
+	@Raw
+	public boolean isValidSlimeID(Long slimeID) throws NullPointerException{
+		if (slimeID == null || slimeID < 0)
+			return false;
+		else
+			return true;
+	}
+	
+	 /**
+	 * check whether the given slime id is a unique slime id.
+	 * 
+	 * @param slimeID
+	 * 		  | the slimeId to check
+	 * 
+	 * @return | if exist(slime in this.getWorld().getSchoolSet()
+	 * 		   |	where slimeID == slime.getSlimeID())
+	 * 		   |	then return false
+	 * 		   |else
+	 * 		   |	then return true
+	 */
+	@Raw
+	public boolean isUniqueSlimeID(long slimeID) throws IllegalArgumentException{
+		World world = this.getWorld();
+		if (world != null) {
+			Set<School> schoolSet = world.getSchoolSet();
+			for(School school: schoolSet) {
+				for(Slime slime: school.getAllSlimes()) {
+					if (slimeID == slime.getSlimeID())
+						return false;
+				}
+			}
+		}
+		return true;	
+	}
+	
+	/**
+	 * Set the slime id of this slime to the given slime id
+	 * 
+	 * @param slimeID
+	 * 		  | the slimeId to set
+	 * 
+	 * @post  |new.getSlimeId() slimeID
+	 */
+	@Raw @Basic
+	private void setSlimeID(long slimeID) {
+		this.slimeID = slimeID;
+	}
+	
+	 /**
+	 * Variable referencing the slimeID for this slime.
+	 */
+	private Long slimeID;
+	
+//_______________________________velocity_________________________________________
+
+	 /**
+	 * Returns the velocity id of this slime
+	 * 
+	 * @return |{XVelocity,0}
+	 */
+	@Override @Basic @Raw
+	public double[] getVelocity() {
+		double[] velocity = {-XVelocity,0}; 
+		return velocity;
+	}
+	
+	/**
+	 * Set the horizontal velocity of this slime to the given velocity
+	 * 
+	 * @param XVelocity
+	 * 		  | the x velocity to set
+	 * 
+	 * @post  |if (Math.abs(XVelocity) < MAX_HOR_SPEED)
+	 * 		  |	then new.getVelocity[0] == XVelocity
+	 * 		  |else
+	 * 		  |	then new.getVelocity[0] == MAX_HOR_SPEED*this.getOrientation()
+	 */
+	@Basic @Raw
+	public void setXVelocity(double XVelocity) {
+		if (Math.abs(XVelocity) < MAX_HOR_SPEED)
+			this.XVelocity = (XVelocity);
+		else {
+			this.XVelocity = MAX_HOR_SPEED*this.getOrientation();
+		}
+	}
+	
+	 /**
+	 * Variable referencing the horizontal velocity of this slime.
+	 */
+	private double XVelocity;
+	
+   /**
+	* Variable referencing the magnitude of the maximum horizontal speed of any slime.
+	*/
+	private static final double MAX_HOR_SPEED = 2.5;
+	
+//_______________________________accelleration_________________________________________
+
+	/**
+	* Returns the acceleration  of this slime
+	* 
+	* @return |{this.getXAcceleration(), 0.0}
+	*/
+	@Override @Basic
+	public double[] getAcceleration() {
+		double [] acceleration = new double[] {this.getXAcceleration(), 0.0};
+		return acceleration;
+	}
+	
+	/**
+	* Returns the horizontal acceleration  of this slime
+	* 
+	* @return |this.XAcceleration
+	*/
+	@Basic @Raw
+	public double getXAcceleration() {
+		return this.XAcceleration;
+	}
+	
+	/**
+	 * Set the horizontal acceleration of this slime to the given acceleration
+	 * 
+	 * @param XAcceleration
+	 * 		  | the x acceleration to set
+	 * 
+	 * @post  |new.getXAcceleration() == XAcceleration
+	 */
+	@Basic @Raw
+	public void setXAcceleration(double XAcceleration){
+		this.XAcceleration = XAcceleration;
+	}
+	
+	/**
+	* Variable referencing the horizontal acceleration of this slime.
+	*/
+	private double XAcceleration;
+
+	/**
+	* Variable referencing the magnitude of the horizontal acceleration of any slime while moving.
+	*/
+	private static final double SLIMEACCELERATION = 0.7;
+
+//_______________________________school_________________________________________
+
+	 /**
+	 * Returns the school  of this slime
+	 * 
+	 * @return |this.school
+	 */
+	@Basic @Raw
+	public School getSchool() {
+		return this.school;
+	}
+	
+	 /**
+	 * Checks whether this slime is in a school
+	 * 
+	 * @return |this.getSchool() != null
+	 */
+	public boolean isInSchool() {
+		return (this.getSchool() != null);
+	}
+	
+	 /**
+	 * Let this slime leave his current school and join the given school.
+	 * 
+	 * @param other
+	 * 		  The school to switch to
+	 * 
+	 * @throws IllegalArgumentException()
+	 * 		   | this.getSchool() == null || other == null
+	 *		   |	|| this.isTerminated() || other.isTerminated()
+	 * 
+	 * @post  | new.getschool() == other
+	 * @post  | !new.getSchool().getSchoolCollection().contains(this)
+	 * @post  |if (this.getWorld() != null)
+	 *		  |	then for (Slime s1: this.getSchool().getSchoolCollection()) 
+	 *		  |		s1new.getHitpoints() = s1.hitpoints-1
+     *		  |	then for (Slime s2: this.getSchool().getSchoolCollection()) 
+	 *		  |		s2new.getHitpoints() =s2.hitpoints+1
+	 *@post   | new.getHitpoints() == hitpoints +other.getSchoolCollection().size()-this.getSchool().getSchoolCollection().size()
+	 *
+	 */
+	public void switchSlime(School other) throws IllegalArgumentException{
+		if (this.getSchool() == null || other == null
+				|| this.isTerminated() || other.isTerminated())
+				throw new IllegalArgumentException();
+		if (this.getWorld() != null) {
+			this.getSchool().getSchoolCollection().remove(this);
+			int lengthOther = other.getSchoolCollection().size();
+			int lengthThis = this.getSchool().getSchoolCollection().size();
+			for (Slime s1: this.getSchool().getSchoolCollection()) {
+				s1.involveSlime(1);
+			}
+			for (Slime s2: other.getSchoolCollection()) {
+				s2.involveSlime(-1);
+			}
+			this.involveSlime(lengthOther-lengthThis);
+			other.getSchoolCollection().add(this);
+		}
+		this.setSchool(other);
+	}
+	
+	 /**
+	 * Add the given hitpoints to this slime without affecting other slimes
+	 * 
+	 * @param addition
+	 * 		  The hitpoints to add
+	 * 
+	 * @post  | new.getHitpoints() == hitpoints + addition
+	 *
+	 */
+	public void involveSlime(int addition) {
+		int hitpoints = this.getHitpoints();
+		this.setHitpoints(hitpoints + addition);
+	}
+	
+	 /**
+	 * Add this slime to the nullSchool
+	 * 
+	 * @param addition
+	 * 		  The hitpoints to add
+	 * 
+	 * @post  | School.getNullSchool().contains(this)
+	 */
+	public void setNullSchool() {
+		School nullSchool = School.getNullSchool();
+		nullSchool.add(this);
+	}
+	
+	 /**
+	 * Set the school of this slime to the given school.
+	 * 
+	 * @param school
+	 * 		  The school to set
+	 * 
+	 * @post  | School.getSchool == school.
+	 */
+	@Basic @Raw
+	public void setSchool(School school) {
+		this.school = school;
+	}
+	
+	/**
+	* Variable referencing the school of this slime.
+	*/
+	public School school = null;
+	
+//_______________________________terminate override_________________________________________
+	/**
+	 * Terminate this slime
+	 * 
+	 * @post | new.isTerminated() == true
+	 * 
+	 * @effect | if (this.getSchool() != null)
+	 *		   |	then this.getSchool().remove(this)
+	 * @effect | if (this.getWorld() != null) 
+	 * 		   |	then this.getWorld().removeAsGameObject(this)
+	 */
+	@Basic @Raw @Override
+	public void terminate() {
+		World world = this.getWorld();
+		if (world != null) 
+			world.removeAsGameObject(this);
+		school = this.getSchool();
+		if (school != null)
+			school.remove(this);
+		this.terminated = true;
+	}
+	
+//_______________________________sprites_________________________________________
+
+		@Override
+		boolean isValidNbSprites(int nbSprites) {
+			return (nbSprites == 2);
+		}
+
+		@Override
+		public Sprite getCurrentSprite() {
+			if (this.getOrientation() == -1) {
+				return this.getSpriteAt(1);}
+			else
+				return this.getSpriteAt(0);
+		}
+		
+//_______________________________update parameters_________________________________________
+	
+	@Override
+	protected void updateParametersSmallDt(double dt) {
+		this.updateMovement(dt);
+		this.doGeoDamage(dt);
+	}
+	
+	@Override
+	public void changeXPosition(double XPosition) throws IllegalPositionException {
+		Double[] PositionToSet = new Double[] {XPosition,this.getPositionCopy().getYCoordinate()};
+		Position newPosition = new Position(PositionToSet,this.getWorldTileSize());
+		this.changePosition(newPosition);
+	}
+	
+	private void updateMovement(double dt) {
+		try {
+			this.updateXPosition(dt);
+			this.updateHorVelocity(dt);
+		}
+		catch (IllegalPositionException exc) {
+
+			this.setXVelocity(0.0);
+			this.setCollided(true);
+		}
+	}
+	
+	@Override
+	public void doCollisionWith(GameObject other, double dt) {
+		int damage = 0;
+		School thisSchool = this.getSchool();
+
+		if (other instanceof Mazub) {
+			damage = MAZUB_DAMAGE;
+		}
+		if (other instanceof Shark) {
+		damage = this.getHitpoints();
+		}
+		if (other instanceof Slime) {
+			this.setOrientation(this.getOrientation()*-1);
+			this.setXAcceleration(SLIMEACCELERATION*this.getOrientation());
+			School otherSchool = ((Slime) other).getSchool();
+			if (thisSchool != null) {
+				if (thisSchool.getAllSlimes().size() < otherSchool.getAllSlimes().size())
+					this.switchSlime(otherSchool);
+			}
+		}
+		this.addHitpoints(-damage);	
+	}
+	
+	private static final int MAZUB_DAMAGE = 30;
+	
+	@Override
+	public double getCounterforGeoFeature(int geologicalFeature) {
+		return GeologicalFeaturesEnum.getSlimeCounter(geologicalFeature);
+	}
+
+	@Override
+	public boolean isInstant(int geologicalFeature) {
+		return GeologicalFeaturesEnum.isSlimeInstant(geologicalFeature);
+	}
+	
+	@Override
+	public int getGeoDamage(int geologicalFeature) {
+		return GeologicalFeaturesEnum.getSlimeDamage(geologicalFeature);
+	}
+
+	@Override
+	public int definePriority(Set<Integer> geologicalFeatures) {
+		int maxDamage = 0;
+		int priority = 0;
+		for(int geologicalFeature: geologicalFeatures) {
+			int damage = Math.abs(this.getGeoDamage(geologicalFeature));
+			if (damage > maxDamage) {
+				maxDamage = damage;
+				priority = geologicalFeature;
+			}
+		}
+		return priority;
+	}
+
+	@Override
+	public void addHitpoints(int addition) {
+		int hitpoints = this.getHitpoints();
+ 		this.setHitpoints(hitpoints + addition);
+ 		if (this.getSchool() != null && addition < 0) {
+	 		TreeSet<Slime> school = this.getSchool().getAllSlimes();
+			for(Slime slime: school) {
+				if (slime != this)
+					slime.involveSlime(-1);
+			}
+ 		}
+	}
+
+}

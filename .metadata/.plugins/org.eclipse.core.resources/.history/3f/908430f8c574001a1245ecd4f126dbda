@@ -1,0 +1,54 @@
+package testing;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import org.junit.Test;
+
+import jumpingalien.model.Pixel;
+import jumpingalien.model.Position;
+import jumpingalien.model.Tile;
+import jumpingalien.model.World;
+
+public class testen {
+	@Test
+	public void testing() {
+		int tileSize = 5;
+		Integer[] p = {10,15};
+		Pixel pixel = new Pixel(p,tileSize);	
+		Position position = pixel.convertToPosition();
+		assertEquals(0.1, position.getXCoordinate(),0);
+		assertEquals(0.15, position.getYCoordinate(),0);
+		Tile tile = pixel.convertToTile();
+		assertEquals(2, tile.getXCoordinate(),0);
+		assertEquals(3, tile.getYCoordinate(),0);
+	}
+	
+	@Test 
+	public void leakTest() {
+		int tileSize = 5;
+		Integer[] p = {10,15};
+		Pixel pixel = new Pixel(p,tileSize);
+		int copy = pixel.getXCoordinate();
+		copy += 3;
+		assertFalse(copy == pixel.getXCoordinate());
+	}
+	
+	@Test
+	public void matrixTest() {		
+		int[] list = {1,1,2,2,3,3};
+		int[][] solution = {{1,1},{2,2},{3,3},{0,0}};
+		int tileSize = 5;
+		int nbXTiles = 2;
+		int nbYTiles = 4;
+		int[] targetTile = {0,0};
+		World newWorld = new World(tileSize, nbXTiles, nbYTiles, targetTile, 5, 5, list);
+		int[][] mat = newWorld.Tilematrix(list);
+		for (int y = 0; y < 4;y++) {
+			for (int x = 0; x < 2; x++) {
+				assertEquals(mat[y][x],solution[y][x]);
+			}
+		}
+	}
+
+}
